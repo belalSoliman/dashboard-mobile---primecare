@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductModel with ChangeNotifier {
   final String productId,
@@ -9,7 +10,10 @@ class ProductModel with ChangeNotifier {
       productImage,
       productQuantity;
 
+  final Timestamp? timestamp;
+
   ProductModel({
+    this.timestamp,
     required this.productId,
     required this.productTitle,
     required this.productPrice,

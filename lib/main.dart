@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:mobiledashboard/firebase_options.dart';
+
 import 'package:mobiledashboard/screens/dashboard_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -13,9 +13,7 @@ import 'screens/search_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -26,34 +24,53 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // final themeProvider = Provider.of<ThemeProvider>(context);
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => ThemeProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ProductProvider(),
-        ),
-      ],
-      child: Consumer<ThemeProvider>(builder: (
-        context,
-        themeProvider,
-        child,
-      ) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Shop Smart ADMIN AR',
-          theme: Styles.themeData(
-              isDarkTheme: themeProvider.getIsDarkTheme, context: context),
-          home: const DashboardScreen(),
-          routes: {
-            OrdersScreenFree.routeName: (context) => const OrdersScreenFree(),
-            SearchScreen.routeName: (context) => const SearchScreen(),
-            EditOrUploadProductScreen.routeName: (context) =>
-                const EditOrUploadProductScreen(),
-          },
-        );
-      }),
-    );
+    return FutureBuilder(
+        future: Firebase.initializeApp(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Scaffold(
+              body: Center(
+                child: Text(snapshot.error.toString()),
+              ),
+            );
+          }
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider(
+                create: (_) => ThemeProvider(),
+              ),
+              ChangeNotifierProvider(
+                create: (_) => ProductProvider(),
+              ),
+            ],
+            child: Consumer<ThemeProvider>(builder: (
+              context,
+              themeProvider,
+              child,
+            ) {
+              return MaterialApp(
+                debugShowCheckedModeBanner: false,
+                title: 'Shop Smart ADMIN AR',
+                theme: Styles.themeData(
+                    isDarkTheme: themeProvider.getIsDarkTheme,
+                    context: context),
+                home: const DashboardScreen(),
+                routes: {
+                  OrdersScreenFree.routeName: (context) =>
+                      const OrdersScreenFree(),
+                  SearchScreen.routeName: (context) => const SearchScreen(),
+                  EditOrUploadProductScreen.routeName: (context) =>
+                      const EditOrUploadProductScreen(),
+                },
+              );
+            }),
+          );
+        });
   }
 }
