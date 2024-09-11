@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "1035210024290",
+    "project_id": "primecare-13cfb",
+    "storage_bucket": "primecare-13cfb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1035210024290:android:04bd2437a7df819fc9f83b",
+        "android_client_info": {
+          "package_name": "com.example.mobiledashboard"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1035210024290-q2p7lc0bpoi8mfhqktdradlavqtmbrd8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2H6RFaNmQW9ncenn1sWXdBtqNlUrk8kI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1035210024290-q2p7lc0bpoi8mfhqktdradlavqtmbrd8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1035210024290-5ru7tnp0mraoclmlse3rgval739laqo4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dashboardmpbile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1035210024290:android:59f9035bb75c7a2ec9f83b",
+        "android_client_info": {
+          "package_name": "com.example.pharnacy_trust"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1035210024290-79m49gs9pi1vm2lm8euu5opid80q0lp3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pharnacy_trust",
+            "certificate_hash": "4a69ffd4f3eb175767132894c58351a5a15b9c57"
+          }
+        },
+        {
+          "client_id": "1035210024290-q2p7lc0bpoi8mfhqktdradlavqtmbrd8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2H6RFaNmQW9ncenn1sWXdBtqNlUrk8kI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1035210024290-q2p7lc0bpoi8mfhqktdradlavqtmbrd8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1035210024290-5ru7tnp0mraoclmlse3rgval739laqo4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.dashboardmpbile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
