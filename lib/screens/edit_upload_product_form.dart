@@ -40,6 +40,7 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
   late TextEditingController _titleController,
       _priceController,
       _descriptionController,
+      _salespricecontroller,
       _quantityController;
   String? _categoryValue;
   bool _isLoading = false;
@@ -446,6 +447,9 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
                                     );
                                   },
                                 ),
+                              ),
+                              const SizedBox(
+                                width: 10,
                               ),
                             ],
                           ),
