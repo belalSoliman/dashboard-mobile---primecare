@@ -14,6 +14,7 @@ class ProductWidget extends StatefulWidget {
   });
 
   final String productId;
+
   @override
   State<ProductWidget> createState() => _ProductWidgetState();
 }
@@ -21,56 +22,65 @@ class ProductWidget extends StatefulWidget {
 class _ProductWidgetState extends State<ProductWidget> {
   @override
   Widget build(BuildContext context) {
-    // final productModelProvider = Provider.of<ProductModel>(context);
     final productProvider = Provider.of<ProductProvider>(context);
     final getCurrProduct = productProvider.findByProdId(widget.productId);
     Size size = MediaQuery.of(context).size;
-    return getCurrProduct == null
-        ? const SizedBox.shrink()
-        : Padding(
-            padding: const EdgeInsets.all(3.0),
-            child: GestureDetector(
-              onTap: () async {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => EditOrUploadProductScreen(
-                              productModel: getCurrProduct,
-                            )));
-              },
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(30.0),
-                    child: FancyShimmerImage(
-                      imageUrl: getCurrProduct.productImage,
-                      width: double.infinity,
-                      height: size.height * 0.22,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15.0,
-                  ),
-                  TitlesTextWidget(
-                    label: getCurrProduct.productTitle,
-                    maxLines: 2,
-                    fontSize: 18,
-                  ),
-                  const SizedBox(
-                    height: 15.0,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: SubtitleTextWidget(
-                      label: "${getCurrProduct.productPrice}\$",
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                ],
+
+    // Handle the case when the product is not found
+    if (getCurrProduct == null) {
+      return const SizedBox
+          .shrink(); // Return an empty widget if no product is found
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(3.0),
+      child: GestureDetector(
+        onTap: () async {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditOrUploadProductScreen(
+                productModel: getCurrProduct,
               ),
             ),
           );
+        },
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(30.0),
+              child: FancyShimmerImage(
+                imageUrl: getCurrProduct
+                    .images, // Ensure the correct field name is used
+                width: double.infinity,
+                height: size.height * 0.22,
+              ),
+            ),
+            const SizedBox(
+              height: 15.0,
+            ),
+            TitlesTextWidget(
+              label:
+                  getCurrProduct.title, // Ensure the correct field name is used
+              maxLines: 2,
+              fontSize: 18,
+            ),
+            const SizedBox(
+              height: 15.0,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: SubtitleTextWidget(
+                label:
+                    "${getCurrProduct.price}\$", // Ensure the correct field name is used
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

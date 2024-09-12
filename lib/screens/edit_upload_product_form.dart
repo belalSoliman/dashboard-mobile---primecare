@@ -8,15 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobiledashboard/consts/app_constants.dart';
+import 'package:mobiledashboard/consts/my_validators.dart';
 import 'package:mobiledashboard/models/product_model.dart';
 import 'package:mobiledashboard/screens/loading_manger.dart';
 import 'package:mobiledashboard/services/my_app_method.dart';
 import 'package:mobiledashboard/widgets/subtitle_text.dart';
-
+import 'package:mobiledashboard/widgets/title_text.dart';
 import 'package:uuid/uuid.dart';
-
-import '../consts/my_validators.dart';
-import '../widgets/title_text.dart';
 
 class EditOrUploadProductScreen extends StatefulWidget {
   static const routeName = '/EditOrUploadProductScreen';
@@ -26,6 +24,7 @@ class EditOrUploadProductScreen extends StatefulWidget {
     this.productModel,
   });
   final ProductModel? productModel;
+
   @override
   State<EditOrUploadProductScreen> createState() =>
       _EditOrUploadProductScreenState();
@@ -40,26 +39,32 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
   late TextEditingController _titleController,
       _priceController,
       _descriptionController,
-      _salespricecontroller,
-      _quantityController;
+      _quantityController,
+      _discountPercentageController;
   String? _categoryValue;
+  bool _isOnSale = false;
+  bool _isStrip = false;
   bool _isLoading = false;
   String? productImageUrl;
+
   @override
   void initState() {
     if (widget.productModel != null) {
       isEditing = true;
-      productNetworkImage = widget.productModel!.productImage;
-      _categoryValue = widget.productModel!.productCategory;
+      productNetworkImage = widget.productModel!.images;
+      _categoryValue = widget.productModel!.category;
+      _isOnSale = widget.productModel!.isonsale;
+      _isStrip = widget.productModel!.isStrip;
     }
-    _titleController =
-        TextEditingController(text: widget.productModel?.productTitle);
+    _titleController = TextEditingController(text: widget.productModel?.title);
     _priceController =
-        TextEditingController(text: widget.productModel?.productPrice);
+        TextEditingController(text: widget.productModel?.price.toString());
     _descriptionController =
-        TextEditingController(text: widget.productModel?.productDescription);
+        TextEditingController(text: widget.productModel?.description);
     _quantityController =
         TextEditingController(text: widget.productModel?.productQuantity);
+    _discountPercentageController = TextEditingController(
+        text: widget.productModel?.discountPercentage.toString());
 
     super.initState();
   }
@@ -70,6 +75,7 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
     _priceController.dispose();
     _descriptionController.dispose();
     _quantityController.dispose();
+    _discountPercentageController.dispose();
     super.dispose();
   }
 
@@ -78,6 +84,7 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
     _priceController.clear();
     _descriptionController.clear();
     _quantityController.clear();
+    _discountPercentageController.clear();
     removePickedImage();
   }
 
@@ -86,6 +93,108 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
       _pickedImage = null;
       productNetworkImage = null;
     });
+  }
+
+  Future<void> localImagePicker() async {
+    final ImagePicker picker = ImagePicker();
+    await MyAppMethods.imagePickerDialog(
+      context: context,
+      cameraFCT: () async {
+        _pickedImage = await picker.pickImage(source: ImageSource.camera);
+        setState(() {});
+      },
+      galleryFCT: () async {
+        _pickedImage = await picker.pickImage(source: ImageSource.gallery);
+        setState(() {});
+      },
+      removeFCT: () {
+        setState(() {
+          _pickedImage = null;
+        });
+      },
+    );
+  }
+
+  Future<void> _editProduct() async {
+    final isValid = _formKey.currentState!.validate();
+    FocusScope.of(context).unfocus();
+    if (_pickedImage == null && productNetworkImage == null) {
+      MyAppMethods.showErrorORWarningDialog(
+        context: context,
+        subtitle: "Please pick up an image",
+        fct: () {},
+      );
+      return;
+    }
+    if (isValid) {
+      _formKey.currentState!.save();
+      try {
+        setState(() {
+          _isLoading = true;
+        });
+
+        // If a new image is picked, upload it to Firebase Storage
+        if (_pickedImage != null) {
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child("productsImages")
+              .child('${_titleController.text.trim()}.jpg');
+          await ref.putFile(File(_pickedImage!.path));
+          productImageUrl = await ref.getDownloadURL();
+        }
+
+        // Update the product in Firestore
+        await FirebaseFirestore.instance
+            .collection("products")
+            .doc(widget.productModel!.productId)
+            .update({
+          'title': _titleController.text,
+          'price': double.parse(_priceController.text),
+          'images': productImageUrl ?? productNetworkImage,
+          'category': _categoryValue,
+          'description': _descriptionController.text,
+          'productQuantity': _quantityController.text,
+          'discountPercentage':
+              double.parse(_discountPercentageController.text),
+          'isOnSale': _isOnSale,
+          'isStrip': _isStrip,
+          'updatedAt': Timestamp.now(),
+        });
+
+        Fluttertoast.showToast(
+          msg: "Product has been updated",
+          toastLength: Toast.LENGTH_SHORT,
+          textColor: Colors.white,
+        );
+
+        // Optionally, clear the form after a successful update
+        if (!mounted) return;
+        await MyAppMethods.showErrorORWarningDialog(
+          isError: false,
+          context: context,
+          subtitle: "Clear form?",
+          fct: () {
+            clearForm();
+          },
+        );
+      } on FirebaseException catch (error) {
+        await MyAppMethods.showErrorORWarningDialog(
+          context: context,
+          subtitle: "An error has occurred: ${error.message}",
+          fct: () {},
+        );
+      } catch (error) {
+        await MyAppMethods.showErrorORWarningDialog(
+          context: context,
+          subtitle: "An error has occurred: $error",
+          fct: () {},
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _uploadProduct() async {
@@ -127,12 +236,16 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
             .doc(productID)
             .set({
           'productId': productID,
-          'productTitle': _titleController.text,
-          'productPrice': _priceController.text,
-          'productImage': productImageUrl,
-          'productCategory': _categoryValue,
-          'productDescription': _descriptionController.text,
+          'title': _titleController.text,
+          'price': double.parse(_priceController.text),
+          'images': productImageUrl,
+          'category': _categoryValue,
+          'description': _descriptionController.text,
           'productQuantity': _quantityController.text,
+          'discountPercentage':
+              double.parse(_discountPercentageController.text),
+          'isOnSale': _isOnSale,
+          'isStrip': _isStrip,
           'createdAt': Timestamp.now(),
         });
         Fluttertoast.showToast(
@@ -169,39 +282,8 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
     }
   }
 
-  Future<void> _editProduct() async {
-    final isValid = _formKey.currentState!.validate();
-    FocusScope.of(context).unfocus();
-    if (_pickedImage == null && productNetworkImage == null) {
-      MyAppMethods.showErrorORWarningDialog(
-        context: context,
-        subtitle: "Please pick up an image",
-        fct: () {},
-      );
-      return;
-    }
-    if (isValid) {}
-  }
-
-  Future<void> localImagePicker() async {
-    final ImagePicker picker = ImagePicker();
-    await MyAppMethods.imagePickerDialog(
-      context: context,
-      cameraFCT: () async {
-        _pickedImage = await picker.pickImage(source: ImageSource.camera);
-        setState(() {});
-      },
-      galleryFCT: () async {
-        _pickedImage = await picker.pickImage(source: ImageSource.gallery);
-        setState(() {});
-      },
-      removeFCT: () {
-        setState(() {
-          _pickedImage = null;
-        });
-      },
-    );
-  }
+  // The `_editProduct` function will be similar to `_uploadProduct`,
+  // with adjustments for updating the existing document in Firestore
 
   @override
   Widget build(BuildContext context) {
@@ -237,12 +319,11 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
                         fontSize: 20,
                       ),
                     ),
-                    onPressed: () {},
+                    onPressed: clearForm,
                   ),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.all(12),
-                      // backgroundColor: Colors.red,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           10,
@@ -270,8 +351,8 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
           ),
           appBar: AppBar(
             centerTitle: true,
-            title: const TitlesTextWidget(
-              label: "Upload a new product",
+            title: TitlesTextWidget(
+              label: isEditing ? "Edit Product" : "Upload a new product",
             ),
           ),
           body: SafeArea(
@@ -324,7 +405,6 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
                         File(
                           _pickedImage!.path,
                         ),
-                        // width: size.width * 0.7,
                         height: size.width * 0.5,
                         alignment: Alignment.center,
                       ),
@@ -455,6 +535,27 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
                           ),
                           const SizedBox(height: 15),
                           TextFormField(
+                            key: const ValueKey('Discount Percentage'),
+                            controller: _discountPercentageController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: <TextInputFormatter>[
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^(\d+)?\.?\d{0,2}'),
+                              ),
+                            ],
+                            decoration: const InputDecoration(
+                              hintText: 'Discount Percentage',
+                            ),
+                            validator: (value) {
+                              return MyValidators.uploadProdTexts(
+                                value: value,
+                                toBeReturnedString:
+                                    "Discount percentage is missing",
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          TextFormField(
                             key: const ValueKey('Description'),
                             controller: _descriptionController,
                             minLines: 5,
@@ -471,6 +572,33 @@ class _EditOrUploadProductScreenState extends State<EditOrUploadProductScreen> {
                               );
                             },
                             onTap: () {},
+                          ),
+                          const SizedBox(height: 15),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CheckboxListTile(
+                                  title: const Text("Is On Sale"),
+                                  value: _isOnSale,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _isOnSale = newValue!;
+                                    });
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                child: CheckboxListTile(
+                                  title: const Text("Is Strip"),
+                                  value: _isStrip,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _isStrip = newValue!;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
